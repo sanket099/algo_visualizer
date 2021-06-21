@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'Constants.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -33,8 +35,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<int> _numbers = [];
   int _sampleSize = 500;
-  late StreamController<List<int>> _streamController;
-  late Stream<List<int>> _stream;
+  late StreamController<List<int>>  _streamController = StreamController<List<int>>();
+  late Stream<List<int>> _stream = _streamController.stream;
   _randomize(){
 
     _numbers = [];
@@ -47,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
   _sort() async{
+
     for (int i = 0; i < _numbers.length; ++i) {
       for (int j = 0; j < _numbers.length - i - 1; ++j) {
         if (_numbers[j] > _numbers[j + 1]) {
@@ -55,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _numbers[j + 1] = temp;
         }
 
-        await Future.delayed(Duration(microseconds : 500));
+        await Future.delayed(Duration(microseconds : 100));
         _streamController.add(_numbers);
 
       }
@@ -63,6 +66,114 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   }
+
+  _insertionSort() async {
+
+      if (_numbers.length == 0) return;
+      int n = _numbers.length;
+      int temp, i, j;
+
+      for(i=1; i< n; i++) {
+        temp = _numbers[i];
+        j=i-1;
+        while(j >= 0 && temp < _numbers[j] ) {
+          _numbers[j+1] = _numbers[j];
+          --j;
+
+          await Future.delayed(Duration(microseconds : 100));
+          _streamController.add(_numbers);
+        }
+        _numbers[j+1] = temp;
+      }
+    }
+
+  void merge(int leftIndex, int middleIndex, int rightIndex){
+    int leftSize = middleIndex - leftIndex + 1;
+    int rightSize = rightIndex - middleIndex;
+
+    List leftList = new List.filled(leftSize, null, growable: false);
+    List rightList = new List.filled(rightSize, null, growable: false);
+
+    for (int i = 0; i < leftSize; i++) leftList[i] = _numbers[leftIndex + i];
+    for (int j = 0; j < rightSize; j++) {rightList[j] = _numbers[middleIndex + j + 1];
+   }
+
+    int i = 0, j = 0;
+    int k = leftIndex;
+
+    while (i < leftSize && j < rightSize) {
+      if (leftList[i] <= rightList[j]) {
+        _numbers[k] = leftList[i];
+        i++;
+      } else {
+        _numbers[k] = rightList[j];
+        j++;
+      }
+      k++;
+
+    }
+
+    while (i < leftSize) {
+      _numbers[k] = leftList[i];
+      i++;
+      k++;
+    }
+
+    while (j < rightSize) {
+      _numbers[k] = rightList[j];
+      j++;
+      k++;
+    }
+
+  }
+
+   mergeSort(int leftIndex, int rightIndex) {
+    if (leftIndex < rightIndex) {
+      int middleIndex = (rightIndex + leftIndex) ~/ 2;
+
+
+
+      mergeSort( leftIndex, middleIndex);
+
+      mergeSort( middleIndex + 1, rightIndex);
+
+
+      merge(leftIndex, middleIndex, rightIndex);
+    }
+  }
+  void swap(List list, int i, int j) {
+    int temp = list[i];
+    list[i] = list[j];
+    list[j] = temp;
+  }
+
+   partition(List list, int low, int high) async {
+     if (list.length == 0) return 0;
+     int pivot = list[high];
+     int i = low - 1;
+
+     for (int j = low; j < high; j++) {
+       if (list[j] <= pivot) {
+         i++;
+         swap(list, i, j);
+       }
+       await Future.delayed(Duration(microseconds : 100));
+       _streamController.add(_numbers);
+       swap(list, i + 1, high);
+       return i + 1;
+     }
+   }
+
+    void quickSort(List list, int low, int high) {
+      if (low < high) {
+        int pi = partition(list, low, high);
+        quickSort(list, low, pi-1);
+        quickSort(list, pi+1, high);
+      }
+    }
+
+
+
 
   @override
   void initState() {
@@ -81,6 +192,20 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
 
           title: Text("Sort"),
+          backgroundColor: Color(0x000000),
+          actions: <Widget>[
+            PopupMenuButton<String>(
+                onSelected: choiceAction,
+                itemBuilder: (BuildContext buildContext){
+                      return Constants.choices.map((String choice){
+                              return PopupMenuItem<String>(
+                                  value: choice,
+                                  child: Text(choice),);
+            })
+              .toList();
+
+                })
+          ],
         ),
         body: Container(
           child: StreamBuilder<Object>(
@@ -117,6 +242,20 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
 
     );
+  }
+  void choiceAction(String choice){
+    if(choice == Constants.MergeSort){
+      mergeSort(0, _numbers.length-1);
+    }
+    else if(choice == Constants.BubbleSort){
+      _sort();
+    }
+    else if(choice == Constants.InsertionSort){
+      _insertionSort();
+    }
+    else if(choice == Constants.QuickSort){
+      quickSort(_numbers, 0, _numbers.length - 1);
+    }
   }
 
 }
